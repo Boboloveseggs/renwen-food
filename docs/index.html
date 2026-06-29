@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>名著饮食图鉴</title>
+    <meta
+      name="description"
+      content="从一席菜，看见古典文学里的欲望、人情与命运。"
+    />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./assets/css/style.css" />
+  </head>
+  <body>
+    <main class="site-shell">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__deco hero__deco--left" aria-hidden="true"></div>
+        <div class="hero__deco hero__deco--right" aria-hidden="true"></div>
+        <div class="hero__content">
+          <p class="hero__eyebrow">金瓶梅饮食图鉴</p>
+          <h1 id="hero-title">名著饮食图鉴</h1>
+          <p class="hero__subtitle">
+            从一席菜，看见古典文学里的欲望、人情与命运
+          </p>
+          <button class="hero__button" type="button" data-scroll-target="#foods">
+            开宴
+          </button>
+        </div>
+      </section>
+
+      <section class="foods-section" id="foods" aria-labelledby="foods-title">
+        <div class="section-heading">
+          <p>席间菜目</p>
+          <h2 id="foods-title">已整理菜品</h2>
+        </div>
+        <div class="food-grid" data-food-grid>
+          <article class="food-card food-card--loading">
+            <div class="food-card__image-placeholder"></div>
+            <p>菜品载入中...</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <section class="detail-modal" data-detail-modal aria-hidden="true">
+      <button class="detail-modal__backdrop" type="button" data-close-detail aria-label="关闭详情"></button>
+      <article class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <button class="detail-panel__close" type="button" data-close-detail aria-label="关闭详情">×</button>
+        <div class="detail-panel__image-wrap">
+          <img data-detail-image alt="" loading="lazy" />
+        </div>
+        <div class="detail-panel__content">
+          <p class="detail-panel__number" data-detail-id>DISH 01</p>
+          <h2 id="detail-title" data-detail-name>菜名</h2>
+          <p class="detail-panel__intro" data-detail-intro>简介</p>
+          <dl class="detail-meta">
+            <div>
+              <dt>出处作品</dt>
+              <dd data-detail-source>待补</dd>
+            </div>
+            <div>
+              <dt>回合/章节</dt>
+              <dd data-detail-chapter>待补</dd>
+            </div>
+            <div>
+              <dt>对应卦象</dt>
+              <dd data-detail-gua>待补</dd>
+            </div>
+          </dl>
+          <section class="detail-text">
+            <h3>情节说明</h3>
+            <p data-detail-story>待补</p>
+          </section>
+          <section class="detail-text detail-text--qian">
+            <h3>签文</h3>
+            <p data-detail-qian>待补</p>
+          </section>
+          <section class="detail-text">
+            <h3>吉利话</h3>
+            <p data-detail-lucky>待补</p>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <script src="./assets/js/main.js" defer></script>
+  </body>
+</html>
