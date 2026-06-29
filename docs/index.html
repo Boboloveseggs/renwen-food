@@ -3,86 +3,415 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>名著饮食图鉴</title>
     <meta
       name="description"
-      content="从一席菜，看见古典文学里的欲望、人情与命运。"
+      content="《金瓶梅》饮食主题互动菜谱网页，深黑石纹、暗金圆环与古典席面叙事。"
     />
+    <title>《金瓶梅》饮食图谱</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./assets/css/style.css" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main class="site-shell">
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="hero__deco hero__deco--left" aria-hidden="true"></div>
-        <div class="hero__deco hero__deco--right" aria-hidden="true"></div>
-        <div class="hero__content">
-          <p class="hero__eyebrow">金瓶梅饮食图鉴</p>
-          <h1 id="hero-title">名著饮食图鉴</h1>
-          <p class="hero__subtitle">
-            从一席菜，看见古典文学里的欲望、人情与命运
-          </p>
-          <button class="hero__button" type="button" data-scroll-target="#foods">
-            开宴
+    <div class="intro-screen state-initial-loading" aria-live="polite" aria-label="入席中">
+      <div class="intro-bg" aria-hidden="true"></div>
+      <div class="intro-ornaments" aria-hidden="true">
+        <img class="intro-ornament intro-ornament-left-top" alt="" decoding="async" />
+        <img class="intro-ornament intro-ornament-right-top" alt="" decoding="async" />
+        <img class="intro-ornament intro-ornament-left-bottom" alt="" decoding="async" />
+        <img class="intro-ornament intro-ornament-right-bottom" alt="" decoding="async" />
+      </div>
+
+      <div class="intro-core">
+        <div class="outer-ritual-ring" aria-hidden="true"></div>
+        <div class="loading-tick-ring" aria-hidden="true"></div>
+        <div class="rotating-light" aria-hidden="true"></div>
+
+        <svg class="bowl-icon" viewBox="0 0 120 92" role="img" aria-hidden="true">
+          <path d="M24 42h72" />
+          <path d="M30 43c2 22 14 34 30 34s28-12 30-34" />
+          <path d="M39 76h42" />
+          <path d="M47 84h26" />
+        </svg>
+
+        <div class="steam steam-1"></div>
+        <div class="steam steam-2"></div>
+        <div class="steam steam-3"></div>
+        <div class="loading-text">入席中</div>
+        <button class="enter-button" type="button" disabled>
+          入席
+        </button>
+      </div>
+
+      <div class="burst-particles" aria-hidden="true"></div>
+    </div>
+
+    <main class="main-stage" aria-label="《金瓶梅》饮食主题互动网页">
+      <div class="bg-base" aria-hidden="true"></div>
+      <div class="grain-field" aria-hidden="true"></div>
+      <img class="deco-layer deco-left-top" alt="" decoding="async" aria-hidden="true" />
+      <img class="deco-layer deco-right-top" alt="" decoding="async" aria-hidden="true" />
+      <img class="deco-layer deco-left-bottom" alt="" decoding="async" aria-hidden="true" />
+      <img class="deco-layer deco-right-bottom" alt="" decoding="async" aria-hidden="true" />
+
+      <section class="dish-home is-active" aria-label="菜品页">
+        <div class="dish-home-visual stage-ui">
+          <div class="center-plate" aria-hidden="true">
+            <span class="plate-ring ring-outer"></span>
+            <span class="plate-ring ring-middle"></span>
+            <span class="plate-ring ring-inner"></span>
+            <span class="plate-light"></span>
+          </div>
+          <img class="dish-image" alt="烧猪头" decoding="async" />
+        </div>
+
+        <div class="side-actions side-actions-left stage-ui" aria-label="菜品操作">
+          <button class="action-button open-recipe-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 5.8c2.2-1 4.5-.8 7 .6v13c-2.5-1.4-4.8-1.6-7-.6V5.8Z" />
+              <path d="M12 6.4c2.5-1.4 4.8-1.6 7-.6v13c-2.2-1-4.5-.8-7 .6V6.4Z" />
+              <path d="M8 9.4h1.4" />
+              <path d="M8 12.3h1.4" />
+              <path d="M14.7 9.4h1.4" />
+              <path d="M14.7 12.3h1.4" />
+            </svg>
+            <span>菜谱</span>
+          </button>
+          <button class="action-button next-dish-button" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16 3h5v5" />
+              <path d="M4 20 21 3" />
+              <path d="M21 16v5h-5" />
+              <path d="M15 15 21 21" />
+              <path d="M4 4l5 5" />
+            </svg>
+            <span>换一换</span>
+          </button>
+          <button class="action-button music-toggle-button" type="button" aria-label="播放背景音乐" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 6c4 2 6 6 4 12" />
+              <path d="M14 5c5 3 7 8 4 14" />
+              <path d="M6 9c2 1 3 4 2 7" />
+            </svg>
+            <span>音乐</span>
           </button>
         </div>
+
+        <div class="side-actions side-actions-right stage-ui" aria-label="菜品故事与切换">
+          <button class="nav-button icon-nav-button prev-dish-button" type="button" aria-label="上一道">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 15 6-6 6 6" />
+            </svg>
+          </button>
+          <button class="story-entry open-story-button" type="button">
+            <span>这道菜的</span>
+            <strong>故事</strong>
+            <em>了解更多</em>
+          </button>
+          <button class="nav-button icon-nav-button next-dish-button" type="button" aria-label="下一道">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="dish-home-copy stage-ui" aria-live="polite">
+          <p class="home-kicker">金瓶梅饮食图鉴</p>
+          <p class="home-dish-number"><span>DISH</span><strong>01</strong></p>
+          <h1 class="home-dish-title">烧猪头</h1>
+          <p class="home-dish-subtitle">一根柴禾，烧出宋蕙莲的本事。</p>
+          <p class="home-dish-source">《金瓶梅》第二十三回</p>
+          <div class="home-utility-actions" aria-label="收藏与分享">
+            <button class="utility-button" type="button" data-toast="已收入食单" aria-label="收藏">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+              </svg>
+              <span>收藏</span>
+            </button>
+            <button class="utility-button open-poster-button" type="button" aria-label="分享海报">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <path d="m8.7 10.7 6.6-4.4" />
+                <path d="m8.7 13.3 6.6 4.4" />
+              </svg>
+              <span>分享</span>
+            </button>
+          </div>
+        </div>
+
+        <nav class="home-bottom-nav stage-ui" aria-label="项目导航">
+          <button class="home-bottom-item is-active" type="button">食在当下</button>
+          <button class="home-bottom-item open-story-button" type="button">菜品故事</button>
+          <button class="home-bottom-item open-sign-button" type="button">六十四味人间签</button>
+          <span class="home-bottom-badge">BY TASTE ATLAS</span>
+        </nav>
       </section>
 
-      <section class="foods-section" id="foods" aria-labelledby="foods-title">
-        <div class="section-heading">
-          <p>席间菜目</p>
-          <h2 id="foods-title">已整理菜品</h2>
-        </div>
-        <div class="food-grid" data-food-grid>
-          <article class="food-card food-card--loading">
-            <div class="food-card__image-placeholder"></div>
-            <p>菜品载入中...</p>
+      <section class="recipe-page dish-page-shell" aria-label="菜谱页" aria-hidden="true">
+        <button class="back-button stage-ui recipe-return-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 5-7 7 7 7" />
+            <path d="m21 5-7 7 7 7" />
+          </svg>
+          返回菜品页
+        </button>
+
+        <section class="recipe-board stage-ui" aria-label="金瓶梅菜谱">
+          <div class="recipe-corner recipe-corner-left-top" aria-hidden="true"></div>
+          <div class="recipe-corner recipe-corner-right-top" aria-hidden="true"></div>
+          <div class="recipe-corner recipe-corner-left-bottom" aria-hidden="true"></div>
+          <div class="recipe-corner recipe-corner-right-bottom" aria-hidden="true"></div>
+
+          <nav class="recipe-categories" aria-label="菜谱分类">
+            <button class="recipe-category is-active" type="button" aria-label="席面荤肴">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M17 29c-1.6-5 1.1-10 6.6-12 2.2-.8 4.6-.9 7-.2 1.8-2.6 5.5-2.5 6.8.3 1.2 2.7-.7 5.5-3.6 5.3-.9 2.8-3.1 5.3-6.2 6.7" />
+                <path d="M11 33c5.7 4.9 18.6 5.2 25.8.5" />
+                <path d="M12 32c2.8-4.2 12.2-5.8 23.3.3" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="清蔬小食">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M15 34c12.5-.7 19.5-9 19-23-13 1-20.2 8.8-19 23Z" />
+                <path d="M16 33c4.9-7.2 10.3-12.2 17.2-18.5" />
+                <path d="M14 26c-2.6-2.7-3.3-6-.8-9.6 5.2 1.6 8 5.1 8.3 10.5" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="羹汤粥品">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M12 25h24" />
+                <path d="M15 26c.9 7.2 5 10.8 9 10.8S32.2 33.2 33 26" />
+                <path d="M19 38h10" />
+                <path d="M21 15c-2.1 2.2-2.1 4.2 0 6" />
+                <path d="M27 13c2 2.3 2 4.5 0 6.7" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="茶点糕饼">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M14 23h20v11H14z" />
+                <path d="M11 23h26" />
+                <path d="M18 23c1.3-5.5 4.7-8.5 6-8.5s4.7 3 6 8.5" />
+                <path d="M18 34v4h12v-4" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="禽肉时鲜">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M17 33c-1.8-7.5.8-15.3 8.7-15.4 5.4-.1 9.6 4.8 8.4 11.1-.8 4.1-4.3 6.8-9.4 6.8" />
+                <path d="M26 17c1.4-4.2 4.1-6.1 8.1-5.9" />
+                <path d="M13 20c2.2-.2 4 .6 5.4 2.4" />
+                <path d="M22 35l-2.3 4" />
+                <path d="M30 35l2.3 4" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="果蔬佐味">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M18 22c-5.8 1-9.2 7.6-5 12.4 4.2 4.9 11.3 2.3 12.1-3" />
+                <path d="M30 22c5.8 1 9.2 7.6 5 12.4-4.2 4.9-11.3 2.3-12.1-3" />
+                <path d="M23.7 21.5c.7-5 3.8-8 9.3-9" />
+                <path d="M24 22c-3-2.8-6.4-3.5-10.2-2" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="酒饮酱藏">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M18 14h12" />
+                <path d="M20 14v6c-3.7 2-5.6 5.5-5.6 10.3 0 5 3.1 7.8 9.6 7.8s9.6-2.8 9.6-7.8c0-4.8-1.9-8.3-5.6-10.3v-6" />
+                <path d="M18 29h12" />
+              </svg>
+            </button>
+            <button class="recipe-category" type="button" aria-label="芳草香料">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M24 16c4.2-5.2 9.8-4 10.5 1.8C35.1 23.5 29.8 25.5 24 16Z" />
+                <path d="M24 16c-4.2-5.2-9.8-4-10.5 1.8C12.9 23.5 18.2 25.5 24 16Z" />
+                <path d="M24 32c4.2 5.2 9.8 4 10.5-1.8C35.1 24.5 29.8 22.5 24 32Z" />
+                <path d="M24 32c-4.2 5.2-9.8 4-10.5-1.8C12.9 24.5 18.2 22.5 24 32Z" />
+                <circle cx="24" cy="24" r="3" />
+              </svg>
+            </button>
+          </nav>
+
+          <div class="recipe-grid" aria-label="八道菜谱">
+            <button class="recipe-card" type="button" data-recipe-index="0">
+              <span class="recipe-card-image"><img src="assets/dish-01.webp" alt="烧猪头" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">烧猪头</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="1">
+              <span class="recipe-card-image"><img src="assets/dish-02.webp" alt="炊饼" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">炊饼</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="2">
+              <span class="recipe-card-image"><img src="assets/dish-03.webp" alt="鲜鲊" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">鲜鲊</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="3">
+              <span class="recipe-card-image"><img src="assets/dish-04.webp" alt="王瓜拌辽东金虾" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">王瓜拌辽东金虾</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="4">
+              <span class="recipe-card-image"><img src="assets/dish-05.webp" alt="柳蒸糟鲥鱼" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">柳蒸糟鲥鱼</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="5">
+              <span class="recipe-card-image"><img src="assets/dish-06.webp" alt="八宝攒汤" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">八宝攒汤</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="6">
+              <span class="recipe-card-image"><img src="assets/dish-07.webp" alt="螃蟹鲜" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">螃蟹鲜</span>
+            </button>
+            <button class="recipe-card" type="button" data-recipe-index="7">
+              <span class="recipe-card-image"><img src="assets/dish-08.webp" alt="白糖万寿糕" loading="lazy" decoding="async" /></span>
+              <span class="recipe-card-label">白糖万寿糕</span>
+            </button>
+          </div>
+
+          <button class="recipe-next-page" type="button" data-toast="更多菜谱整理中" aria-label="更多菜谱">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 5 7 7-7 7" />
+            </svg>
+          </button>
+        </section>
+      </section>
+
+      <section class="dish-page-shell dish-story-page" aria-label="当前菜品故事页" aria-hidden="true">
+        <button class="back-button stage-ui return-dish-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 5-7 7 7 7" />
+            <path d="m21 5-7 7 7 7" />
+          </svg>
+          返回菜品页
+        </button>
+
+        <section class="dish-hero-card stage-ui" aria-live="polite">
+          <p class="dish-number">DISH 01</p>
+          <h1 class="dish-title">烧猪头</h1>
+          <p class="dish-subtitle-main">一根柴禾，烧出宋蕙莲的本事。</p>
+          <div class="source-block" aria-label="出处">
+            <p class="dish-book-name">《金瓶梅》</p>
+            <p class="dish-source-line">第二十三回</p>
+          </div>
+          <div class="side-ornament" aria-hidden="true">
+            <span class="side-ornament-line"></span>
+            <span class="side-ornament-core"></span>
+            <span class="side-ornament-line"></span>
+          </div>
+          <img class="story-dish-image" alt="烧猪头" decoding="async" />
+
+          <div class="story-nav-actions">
+            <button class="panel-nav-button prev-dish-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m15 6-6 6 6 6" />
+              </svg>
+              上一道
+            </button>
+            <button class="panel-nav-button next-dish-button" type="button">
+              下一道
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="story-panel stage-ui" aria-label="这道菜的故事">
+          <img class="story-corner-frame" alt="" decoding="async" aria-hidden="true" />
+          <header class="story-panel-header">
+            <span class="header-flourish" aria-hidden="true"></span>
+            <h2>这道菜的故事</h2>
+            <span class="header-flourish" aria-hidden="true"></span>
+          </header>
+
+          <nav class="story-tabs" aria-label="故事栏目">
+            <button class="story-tab is-active" type="button" data-story-section="intro">
+              <span>菜品简介</span>
+            </button>
+            <button class="story-tab" type="button" data-story-section="source">
+              <span>出处与回合</span>
+            </button>
+            <button class="story-tab" type="button" data-story-section="method">
+              <span>味道做法</span>
+            </button>
+            <button class="story-tab" type="button" data-story-section="background">
+              <span>背景故事</span>
+            </button>
+          </nav>
+
+          <article class="story-content" aria-live="polite">
+            <p class="story-section-kicker">菜品简介</p>
+            <h3 class="story-heading">烧猪头是一道怎样的菜？</h3>
+            <div class="story-body"></div>
+            <aside class="story-note">
+              <p class="story-note-text">一盘菜上桌，席间百态，皆在其中。</p>
+            </aside>
           </article>
-        </div>
+        </section>
       </section>
     </main>
 
-    <section class="detail-modal" data-detail-modal aria-hidden="true">
-      <button class="detail-modal__backdrop" type="button" data-close-detail aria-label="关闭详情"></button>
-      <article class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
-        <button class="detail-panel__close" type="button" data-close-detail aria-label="关闭详情">×</button>
-        <div class="detail-panel__image-wrap">
-          <img data-detail-image alt="" loading="lazy" />
+    <div class="human-sign-modal" role="dialog" aria-modal="true" aria-label="六十四味人间签" aria-hidden="true">
+      <button class="human-sign-backdrop close-sign-button" type="button" aria-label="关闭人间签"></button>
+      <section class="human-sign-dialog" aria-live="polite">
+        <button class="human-sign-close close-sign-button" type="button" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m7 7 10 10" />
+            <path d="m17 7-10 10" />
+          </svg>
+        </button>
+        <p class="human-sign-kicker">六十四味人间签</p>
+        <div class="human-sign-stage">
+          <div class="human-sign-stick">
+            <div class="human-sign-stick-back">
+              <img src="assets/sign-back.png" alt="" decoding="async" onerror="this.style.display='none'" />
+            </div>
+            <div class="human-sign-stick-front">
+              <img src="assets/sign-front-blank.png" alt="" decoding="async" onerror="this.style.display='none'" />
+              <div class="human-sign-vertical-text">
+                <p class="human-sign-number">第 01 签</p>
+                <h2 class="human-sign-title">柴火酱香 · 市井</h2>
+                <blockquote class="human-sign-line">慢火不急，滋味自深。</blockquote>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="detail-panel__content">
-          <p class="detail-panel__number" data-detail-id>DISH 01</p>
-          <h2 id="detail-title" data-detail-name>菜名</h2>
-          <p class="detail-panel__intro" data-detail-intro>简介</p>
-          <dl class="detail-meta">
-            <div>
-              <dt>出处作品</dt>
-              <dd data-detail-source>待补</dd>
-            </div>
-            <div>
-              <dt>回合/章节</dt>
-              <dd data-detail-chapter>待补</dd>
-            </div>
-            <div>
-              <dt>对应卦象</dt>
-              <dd data-detail-gua>待补</dd>
-            </div>
-          </dl>
-          <section class="detail-text">
-            <h3>情节说明</h3>
-            <p data-detail-story>待补</p>
-          </section>
-          <section class="detail-text detail-text--qian">
-            <h3>签文</h3>
-            <p data-detail-qian>待补</p>
-          </section>
-          <section class="detail-text">
-            <h3>吉利话</h3>
-            <p data-detail-lucky>待补</p>
-          </section>
+        <div class="human-sign-reading">
+          <p class="human-sign-current">今日应味：烧猪头</p>
+          <p class="human-sign-meaning">把力气收一收，先稳住火候，再看人情的深浅。</p>
         </div>
-      </article>
-    </section>
+        <div class="human-sign-actions">
+          <button class="human-sign-draw" type="button">抽一签</button>
+          <button class="human-sign-accept close-sign-button" type="button">收下此签</button>
+        </div>
+      </section>
+    </div>
 
-    <script src="./assets/js/main.js" defer></script>
+    <div class="poster-modal" role="dialog" aria-modal="true" aria-label="分享海报" aria-hidden="true">
+      <button class="poster-backdrop close-poster-button" type="button" aria-label="关闭海报弹窗"></button>
+      <section class="poster-dialog" aria-live="polite">
+        <button class="poster-close close-poster-button" type="button" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m7 7 10 10" />
+            <path d="m17 7-10 10" />
+          </svg>
+        </button>
+        <header class="poster-header">
+          <p>分享海报</p>
+          <h2>《名著饮食图鉴》</h2>
+        </header>
+        <div class="poster-preview-shell">
+          <canvas class="poster-canvas" width="750" height="1000" hidden></canvas>
+          <img class="poster-preview" alt="当前菜品分享海报，手机端可长按保存" decoding="async" />
+          <p class="poster-loading">海报生成中...</p>
+        </div>
+        <div class="poster-actions">
+          <a class="poster-save-button" href="#" download="名著饮食图鉴-海报.png">保存图片</a>
+          <button class="poster-secondary-button close-poster-button" type="button">关闭</button>
+        </div>
+        <p class="poster-tip">手机端可长按海报图片保存到相册</p>
+      </section>
+    </div>
+
+    <audio class="background-music" src="assets/background-music.mp3" preload="none" loop></audio>
+    <div class="toast" role="status" aria-live="polite"></div>
+    <script src="script.js"></script>
   </body>
 </html>

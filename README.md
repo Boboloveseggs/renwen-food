@@ -1,73 +1,56 @@
 # renwen-food
 
-《名著饮食图鉴》的 GitHub Pages 静态展示版。
+《金瓶梅》饮食主题互动网页的 GitHub Pages 发布仓库。
 
-这个版本的目标是先让网页能打开、能浏览、能发链接给别人看。它不包含后端、数据库、登录系统或构建流程，所有页面、样式、脚本、图片和数据都放在 `docs/` 目录中。
+当前 `/docs` 目录发布的是完整前端预览版本，包含：
+
+- 开场入席页
+- 菜品主页
+- 菜谱页
+- 菜品故事页
+- 六十四味人间签
+- 分享海报
+- 背景音乐控制
+
+项目为纯静态网页，不依赖后端、数据库、登录系统或构建工具。
 
 ## 本地打开
 
-直接打开：
+可以直接打开：
 
 ```text
 docs/index.html
 ```
 
-如果浏览器限制本地读取 `foods.json`，页面会使用内置备用数据继续展示。部署到 GitHub Pages 后会正常读取 `./data/foods.json`。
+也可以在 `docs/` 目录下启动任意静态服务器。
 
-## 目录结构
+## GitHub Pages
+
+仓库 Pages 设置：
+
+```text
+Settings -> Pages -> Build and deployment
+Source: Deploy from a branch
+Branch: main
+Folder: /docs
+```
+
+线上地址：
+
+```text
+https://boboloveseggs.github.io/renwen-food/
+```
+
+## 目录
 
 ```text
 renwen-food/
 README.md
 docs/
-index.html
-assets/
-css/
-style.css
-js/
-main.js
-images/
-data/
-foods.json
+  index.html
+  style.css
+  script.js
+  assets/
 ```
 
-## GitHub Pages 部署
-
-1. 将 `renwen-food` 项目上传到 GitHub 仓库。
-2. 进入 GitHub 仓库设置：
-
-```text
-Settings -> Pages -> Build and deployment
-```
-
-3. Source 选择：
-
-```text
-Deploy from a branch
-```
-
-4. Branch 选择：
-
-```text
-main
-```
-
-5. Folder 选择：
-
-```text
-/docs
-```
-
-6. 点击 Save。
-
-部署后项目页通常会通过下面的路径访问：
-
-```text
-https://你的用户名.github.io/renwen-food/
-```
-
-## 说明
-
-- 所有资源路径均使用相对路径，例如 `./assets/images/food-001.webp`。
-- 第一版只展示已有 8 道菜，后续可以继续扩展到 64 道菜。
-- `docs/data/foods.json` 是当前展示数据来源。
+所有资源均使用相对路径，适合 GitHub Pages 项目页部署。
