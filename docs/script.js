@@ -14,7 +14,12 @@ const ASSETS = {
   ],
 };
 
-const DISH_PRELOAD_RADIUS = 1;
+const PRIORITY_DISH_COUNT = 3;
+const FORWARD_PRELOAD_COUNT = 1;
+const DECORATION_LOAD_GROUPS = [
+  ["deco-left-top", "deco-right-bottom"],
+  ["deco-right-top", "deco-left-bottom"],
+];
 const imageLoadCache = new Map();
 
 const HOME_DISH_IMAGES = [
@@ -612,6 +617,7 @@ const QR_GF = createQrGaloisTables();
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const DISH_FADE_OUT_MS = 220;
 const DISH_FADE_IN_DELAY_MS = 40;
+const SFX_MASTER_VOLUME = 0.26;
 let currentDishIndex = 0;
 let activeStorySection = "intro";
 let toastTimer = 0;
@@ -622,6 +628,7 @@ let dishSwitchToken = 0;
 let currentHumanSign = null;
 let currentHumanSignFortune = null;
 let humanSignRevealTimer = 0;
+let sfxContext = null;
 
 const els = {
   introScreen: document.querySelector(".intro-screen"),
@@ -700,18 +707,19 @@ async function runIntro() {
 }
 
 async function preloadAssets() {
-  const decorationLoads = ASSETS.decorations.map(loadDecorationLayer);
-  const [bgLoaded] = await Promise.all([
-    loadImage(ASSETS.background, 3500),
-    loadFirstDish(),
-  ]);
+  const fastIntro = window.matchMedia("(max-width: 720px)").matches;
+  const bgLoaded = await loadImage(ASSETS.background, fastIntro ? 1600 : 2400);
 
   if (bgLoaded) {
     els.bgBase.style.backgroundImage = `url("${ASSETS.background}")`;
   }
 
   els.introBg.classList.add("is-visible");
-  void Promise.all(decorationLoads);
+  void loadFirstDish();
+  queueIdleTask(() => {
+    void preloadPriorityDishes();
+  }, 1800);
+  void loadDecorationGroups();
 }
 
 async function setReadyToEnter() {
@@ -726,6 +734,7 @@ async function setReadyToEnter() {
 async function enterSite() {
   if (!introReady || enteringSite) return;
 
+  playSoundEffect("enter");
   enteringSite = true;
   els.enterButton.disabled = true;
   createBurstParticles();
@@ -793,9 +802,6 @@ function loadDecorationLayer(deco) {
 
     if (mainOrnament) {
       mainOrnament.src = deco.src;
-      if (els.introScreen?.classList.contains("is-hidden")) {
-        mainOrnament.classList.add("is-visible");
-      }
     }
 
     if (introOrnament) {
@@ -806,18 +812,41 @@ function loadDecorationLayer(deco) {
   });
 }
 
+async function loadDecorationGroups() {
+  for (const group of DECORATION_LOAD_GROUPS) {
+    const decorations = getDecorationGroup(group);
+
+    await Promise.all(decorations.map(loadDecorationLayer));
+    revealDecorationGroup(decorations);
+    await delay(reducedMotion ? 0 : 180);
+  }
+}
+
 function revealBaseBackground() {
   els.bgBase.classList.add("is-visible");
 }
 
 async function revealDecorations() {
-  for (const deco of ASSETS.decorations) {
+  for (const group of DECORATION_LOAD_GROUPS) {
+    revealDecorationGroup(getDecorationGroup(group));
+    await delay(reducedMotion ? 0 : 150);
+  }
+}
+
+function getDecorationGroup(classNames) {
+  return classNames
+    .map((className) => ASSETS.decorations.find((deco) => deco.className === className))
+    .filter(Boolean);
+}
+
+function revealDecorationGroup(decorations) {
+  decorations.forEach((deco) => {
     const layer = document.querySelector(`.${deco.className}`);
+
     if (layer && layer.getAttribute("src")) {
       layer.classList.add("is-visible");
     }
-    await delay(reducedMotion ? 0 : 120);
-  }
+  });
 }
 
 function revealCenterPlate() {
@@ -847,6 +876,10 @@ async function loadFirstDish() {
 
   renderDishPage(dish);
 
+  if (els.dishImage && !els.dishImage.getAttribute("src")) {
+    els.dishImage.src = dish.image;
+  }
+
   const loaded = await loadImage(homeImage, 2200);
 
   if (dishSwitchToken !== loadToken || currentDishIndex !== 0) {
@@ -862,7 +895,6 @@ async function loadFirstDish() {
       els.storyDishImage.src = dish.image;
     }
   });
-  preloadNearbyDishes(0);
   return loaded;
 }
 
@@ -928,7 +960,10 @@ function bindInteractions() {
   document.querySelectorAll(".open-story-button").forEach((button) => {
     button.addEventListener("click", showStoryPage);
   });
-  document.querySelector(".return-dish-button").addEventListener("click", () => showDishHome());
+  document.querySelector(".return-dish-button").addEventListener("click", () => {
+    playSoundEffect("tap");
+    showDishHome();
+  });
   document.querySelectorAll(".open-recipe-button").forEach((button) => {
     button.addEventListener("click", showRecipePage);
   });
@@ -958,7 +993,10 @@ function bindInteractions() {
     showToast("背景音乐暂时无法播放");
   });
   document.querySelectorAll(".recipe-return-button").forEach((button) => {
-    button.addEventListener("click", () => showDishHome());
+    button.addEventListener("click", () => {
+      playSoundEffect("tap");
+      showDishHome();
+    });
   });
   document.querySelectorAll(".recipe-card").forEach((card) => {
     card.addEventListener("click", async () => {
@@ -966,6 +1004,7 @@ function bindInteractions() {
 
       if (!Number.isFinite(index)) return;
 
+      playSoundEffect("switch");
       const switched = await selectDish(index);
 
       if (switched !== false) {
@@ -984,17 +1023,27 @@ function bindInteractions() {
 
   els.storyTabs.forEach((button) => {
     button.addEventListener("click", () => {
+      playSoundEffect("tap");
       activeStorySection = button.dataset.storySection;
       renderStorySection(DISHES[currentDishIndex], activeStorySection);
     });
   });
 
   document.querySelectorAll("[data-toast]").forEach((button) => {
-    button.addEventListener("click", () => showToast(button.dataset.toast));
+    button.addEventListener("click", () => {
+      playSoundEffect("tap");
+      showToast(button.dataset.toast);
+    });
   });
 
   document.querySelectorAll(".bottom-nav-item").forEach((button) => {
     button.addEventListener("click", () => {
+      const opensPanel = button.classList.contains("open-story-button") || button.classList.contains("open-sign-button");
+
+      if (!opensPanel) {
+        playSoundEffect("tap");
+      }
+
       document.querySelectorAll(".bottom-nav-item").forEach((item) => item.classList.remove("is-active"));
       button.classList.add("is-active");
     });
@@ -1028,7 +1077,7 @@ function bindInteractions() {
 async function toggleBackgroundMusic() {
   if (!els.musicAudio || !els.musicToggleButton) return;
 
-  els.musicAudio.volume = 0.42;
+  playSoundEffect("tap");
 
   if (!els.musicAudio.paused) {
     els.musicAudio.pause();
@@ -1036,12 +1085,26 @@ async function toggleBackgroundMusic() {
     return;
   }
 
+  await startBackgroundMusic({ showFeedback: true });
+}
+
+async function startBackgroundMusic({ showFeedback = false } = {}) {
+  if (!els.musicAudio) return false;
+
+  els.musicAudio.volume = 0.42;
+
   try {
     await els.musicAudio.play();
-    showToast("背景音乐已开启");
+    if (showFeedback) {
+      showToast("背景音乐已开启");
+    }
+    return true;
   } catch (error) {
     updateMusicButtonState(false);
-    showToast("请再次点击开启音乐");
+    if (showFeedback) {
+      showToast("请再次点击开启音乐");
+    }
+    return false;
   }
 }
 
@@ -1051,6 +1114,126 @@ function updateMusicButtonState(isPlaying) {
   els.musicToggleButton.classList.toggle("is-playing", isPlaying);
   els.musicToggleButton.setAttribute("aria-pressed", String(isPlaying));
   els.musicToggleButton.setAttribute("aria-label", isPlaying ? "暂停背景音乐" : "播放背景音乐");
+}
+
+function getSoundContext() {
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextCtor) return null;
+
+  if (!sfxContext) {
+    try {
+      sfxContext = new AudioContextCtor({ latencyHint: "interactive" });
+    } catch (error) {
+      sfxContext = new AudioContextCtor();
+    }
+  }
+
+  if (sfxContext.state === "suspended") {
+    void sfxContext.resume();
+  }
+
+  return sfxContext;
+}
+
+function playSoundEffect(name) {
+  try {
+    const ctx = getSoundContext();
+
+    if (!ctx) return;
+
+    switch (name) {
+      case "enter":
+        playTone(ctx, 523.25, 0, .3, { type: "triangle", volume: .2 });
+        playTone(ctx, 783.99, .08, .34, { volume: .11 });
+        playTone(ctx, 1046.5, .18, .38, { volume: .08 });
+        playNoiseBurst(ctx, 0, .12, { volume: .025, filterType: "highpass", frequency: 2400 });
+        break;
+      case "switch":
+        playNoiseBurst(ctx, 0, .045, { volume: .13, filterType: "highpass", frequency: 1900 });
+        playTone(ctx, 739.99, .012, .09, { type: "triangle", volume: .08 });
+        playTone(ctx, 1108.73, .042, .08, { volume: .045 });
+        break;
+      case "paper":
+        playNoiseBurst(ctx, 0, .16, { volume: .07, filterType: "bandpass", frequency: 860, q: .7 });
+        playTone(ctx, 246.94, .02, .08, { type: "triangle", volume: .028 });
+        break;
+      case "draw":
+        [0, .07, .14].forEach((start) => {
+          playNoiseBurst(ctx, start, .055, { volume: .085, filterType: "bandpass", frequency: 1200, q: .9 });
+        });
+        playTone(ctx, 185, 0, .2, { type: "sawtooth", volume: .025 });
+        break;
+      case "reveal":
+        playTone(ctx, 880, 0, .16, { type: "triangle", volume: .1 });
+        playTone(ctx, 1318.51, .06, .2, { volume: .065 });
+        break;
+      case "seal":
+        playNoiseBurst(ctx, 0, .05, { volume: .085, filterType: "lowpass", frequency: 520 });
+        playTone(ctx, 146.83, 0, .12, { type: "sine", volume: .13 });
+        playTone(ctx, 659.25, .07, .14, { type: "triangle", volume: .052 });
+        break;
+      case "confirm":
+        playTone(ctx, 659.25, 0, .1, { type: "triangle", volume: .07 });
+        playTone(ctx, 987.77, .07, .14, { volume: .055 });
+        break;
+      default:
+        playTone(ctx, 620, 0, .055, { type: "triangle", volume: .04 });
+        break;
+    }
+  } catch (error) {
+    // Sound should never block the interaction it decorates.
+  }
+}
+
+function playTone(ctx, frequency, start, duration, options = {}) {
+  const startAt = ctx.currentTime + start;
+  const endAt = startAt + duration;
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const volume = Math.max((options.volume ?? .06) * SFX_MASTER_VOLUME, .0001);
+  const attack = options.attack ?? .008;
+
+  oscillator.type = options.type || "sine";
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  gain.gain.setValueAtTime(.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + attack);
+  gain.gain.exponentialRampToValueAtTime(.0001, endAt);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(startAt);
+  oscillator.stop(endAt + .04);
+}
+
+function playNoiseBurst(ctx, start, duration, options = {}) {
+  const sampleCount = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let index = 0; index < sampleCount; index += 1) {
+    const fade = 1 - index / sampleCount;
+    data[index] = (Math.random() * 2 - 1) * fade;
+  }
+
+  const startAt = ctx.currentTime + start;
+  const endAt = startAt + duration;
+  const source = ctx.createBufferSource();
+  const filter = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+  const volume = Math.max((options.volume ?? .06) * SFX_MASTER_VOLUME, .0001);
+
+  source.buffer = buffer;
+  filter.type = options.filterType || "bandpass";
+  filter.frequency.setValueAtTime(options.frequency || 1000, startAt);
+  filter.Q.setValueAtTime(options.q ?? .8, startAt);
+  gain.gain.setValueAtTime(.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + .006);
+  gain.gain.exponentialRampToValueAtTime(.0001, endAt);
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  source.start(startAt);
+  source.stop(endAt + .02);
 }
 
 function renderDishPage(dish) {
@@ -1109,23 +1292,36 @@ function queueIdleTask(callback, timeout = 1400) {
   return window.setTimeout(callback, 80);
 }
 
-function preloadNearbyDishes(index) {
+function getPriorityDishIndexes() {
+  const count = Math.min(PRIORITY_DISH_COUNT, DISHES.length);
+
+  return Array.from({ length: count }, (_, index) => index);
+}
+
+function preloadPriorityDishes() {
+  return Promise.all(getPriorityDishIndexes().map((dishIndex) => (
+    loadImage(getHomeDishImage(dishIndex), 3600)
+  )));
+}
+
+function preloadUpcomingDishes(index) {
   if (!DISHES.length) return;
 
-  const targetIndexes = new Set();
+  const targetIndexes = [];
 
-  for (let offset = -DISH_PRELOAD_RADIUS; offset <= DISH_PRELOAD_RADIUS; offset += 1) {
-    targetIndexes.add(normalizeDishIndex(index + offset));
+  for (let offset = 1; offset <= FORWARD_PRELOAD_COUNT; offset += 1) {
+    const nextIndex = index + offset;
+
+    if (nextIndex < DISHES.length) {
+      targetIndexes.push(nextIndex);
+    }
   }
+
+  if (!targetIndexes.length) return;
 
   queueIdleTask(() => {
     targetIndexes.forEach((dishIndex) => {
-      const dish = DISHES[dishIndex];
-
-      if (!dish) return;
-
       void loadImage(getHomeDishImage(dishIndex), 3600);
-      void loadImage(dish.image, 3600);
     });
   });
 }
@@ -1186,7 +1382,7 @@ async function selectDish(index) {
     els.storyDishImage.classList.remove("is-switching");
   }
 
-  preloadNearbyDishes(currentDishIndex);
+  preloadUpcomingDishes(currentDishIndex);
   return true;
 }
 
@@ -1269,6 +1465,7 @@ async function changeDish(direction) {
   const nextIndex = normalizeDishIndex(currentDishIndex + direction);
   const dish = DISHES[nextIndex];
 
+  playSoundEffect("switch");
   const switched = await selectDish(nextIndex);
 
   if (switched !== false) {
@@ -1277,6 +1474,7 @@ async function changeDish(direction) {
 }
 
 function showRecipePage() {
+  playSoundEffect("paper");
   els.bgBase.style.backgroundImage = `url("${ASSETS.background}")`;
   els.mainStage.classList.remove("is-story-view");
   els.mainStage.classList.add("is-recipe-view");
@@ -1292,6 +1490,7 @@ function showRecipePage() {
 }
 
 function showStoryPage() {
+  playSoundEffect("paper");
   const dish = DISHES[currentDishIndex];
 
   if (els.storyDishImage && dish?.image && els.storyDishImage.src !== new URL(dish.image, window.location.href).href) {
@@ -1329,6 +1528,7 @@ function showDishHome({ instant = false } = {}) {
 }
 
 function openHumanSignModal() {
+  playSoundEffect("tap");
   populateHumanSignContent();
   resetHumanSignAnimation();
   els.humanSignModal.classList.add("is-open");
@@ -1336,6 +1536,7 @@ function openHumanSignModal() {
 }
 
 function closeHumanSignModal() {
+  playSoundEffect("tap");
   els.humanSignModal.classList.remove("is-open");
   els.humanSignModal.setAttribute("aria-hidden", "true");
   resetHumanSignAnimation();
@@ -1448,6 +1649,7 @@ function resetHumanSignAnimation() {
 }
 
 function drawHumanSign() {
+  playSoundEffect("draw");
   populateHumanSignContent();
 
   if (els.humanSignDraw) {
@@ -1469,6 +1671,7 @@ function drawHumanSign() {
     requestAnimationFrame(() => {
       stick.classList.add("is-drawing");
       humanSignRevealTimer = window.setTimeout(() => {
+        playSoundEffect("reveal");
         stick.classList.add("is-revealed");
         stick.classList.remove("is-drawing");
         if (els.humanSignReading) {
@@ -1501,6 +1704,7 @@ async function copyHumanSign() {
     } else {
       copyTextWithFallback(text);
     }
+    playSoundEffect("confirm");
     showToast("签文已复制，带着这口气走");
   } catch (error) {
     console.error(error);
@@ -1525,6 +1729,7 @@ function copyTextWithFallback(text) {
 }
 
 async function openPosterModal() {
+  playSoundEffect("paper");
   const dish = DISHES[currentDishIndex];
   const renderId = posterRenderId + 1;
   posterRenderId = renderId;
@@ -1546,6 +1751,7 @@ async function openPosterModal() {
     els.posterSaveButton.download = `${dish.title}-名著饮食图鉴.png`;
     els.posterSaveButton.removeAttribute("aria-disabled");
     els.posterModal.classList.add("is-ready");
+    playSoundEffect("seal");
   } catch (error) {
     console.error(error);
     closePosterModal();
@@ -1554,6 +1760,7 @@ async function openPosterModal() {
 }
 
 function closePosterModal() {
+  playSoundEffect("tap");
   posterRenderId += 1;
   els.posterModal.classList.remove("is-open", "is-ready");
   els.posterModal.setAttribute("aria-hidden", "true");
