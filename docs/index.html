@@ -9,6 +9,8 @@
     />
     <title>《金瓶梅》饮食图谱</title>
     <link rel="icon" href="data:," />
+    <link rel="preload" href="assets/bg-base.webp" as="image" fetchpriority="high" />
+    <link rel="preload" href="assets/dish-home-01.webp" as="image" fetchpriority="high" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -54,6 +56,21 @@
       <img class="deco-layer deco-right-bottom" alt="" decoding="async" aria-hidden="true" />
 
       <section class="dish-home is-active" aria-label="菜品页">
+        <div class="mobile-home-topbar stage-ui" aria-label="手机端导航">
+          <button class="mobile-icon-button open-recipe-button" type="button" aria-label="打开菜谱目录">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <button class="mobile-recipe-shortcut open-recipe-button" type="button" aria-label="打开菜谱">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 5.8c2.2-1 4.5-.8 7 .6v13c-2.5-1.4-4.8-1.6-7-.6V5.8Z" />
+              <path d="M12 6.4c2.5-1.4 4.8-1.6 7-.6v13c-2.2-1-4.5-.8-7 .6V6.4Z" />
+            </svg>
+            <span>菜谱</span>
+          </button>
+        </div>
+
         <div class="dish-home-visual stage-ui">
           <div class="center-plate" aria-hidden="true">
             <span class="plate-ring ring-outer"></span>
@@ -118,6 +135,11 @@
           <p class="home-kicker">金瓶梅饮食图鉴</p>
           <p class="home-dish-number"><span>DISH</span><strong>01</strong></p>
           <h1 class="home-dish-title">烧猪头</h1>
+          <div class="mobile-home-links" aria-label="手机端快捷入口">
+            <button class="home-bottom-item is-active" type="button">食在当下</button>
+            <button class="home-bottom-item open-story-button" type="button">菜品故事</button>
+            <button class="home-bottom-item open-sign-button" type="button">六十四味人间签</button>
+          </div>
           <p class="home-dish-subtitle">一根柴禾，烧出宋蕙莲的本事。</p>
           <p class="home-dish-source">《金瓶梅》第二十三回</p>
           <div class="home-utility-actions" aria-label="收藏与分享">
@@ -156,6 +178,7 @@
           </svg>
           返回菜品页
         </button>
+        <h1 class="mobile-recipe-title stage-ui">菜品目录</h1>
 
         <section class="recipe-board stage-ui" aria-label="金瓶梅菜谱">
           <div class="recipe-corner recipe-corner-left-top" aria-hidden="true"></div>
@@ -281,6 +304,13 @@
           </svg>
           返回菜品页
         </button>
+        <button class="mobile-story-share stage-ui open-poster-button" type="button" aria-label="分享这道菜">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 17 17 7" />
+            <path d="M9 7h8v8" />
+            <path d="M19 17v3H4V5h3" />
+          </svg>
+        </button>
 
         <section class="dish-hero-card stage-ui" aria-live="polite">
           <p class="dish-number">DISH 01</p>
@@ -345,6 +375,21 @@
             </aside>
           </article>
         </section>
+
+        <div class="mobile-story-actions stage-ui" aria-label="故事页手机操作">
+          <button class="mobile-story-save utility-button" type="button" data-toast="已收入食单">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+            </svg>
+            <span>收藏</span>
+          </button>
+          <button class="mobile-story-more open-recipe-button" type="button">
+            <span>品味更多菜品</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+        </div>
       </section>
     </main>
 
@@ -376,9 +421,15 @@
         <div class="human-sign-reading">
           <p class="human-sign-current">今日应味：烧猪头</p>
           <p class="human-sign-meaning">把力气收一收，先稳住火候，再看人情的深浅。</p>
+          <div class="human-sign-luck" aria-label="今日签运">
+            <span class="human-sign-chip human-sign-suitable">宜：稳住火候</span>
+            <span class="human-sign-chip human-sign-avoid">忌：急着翻锅</span>
+            <span class="human-sign-chip human-sign-joy">开心小事：给自己添一口甜</span>
+          </div>
         </div>
         <div class="human-sign-actions">
           <button class="human-sign-draw" type="button">抽一签</button>
+          <button class="human-sign-copy" type="button" disabled>复制签文</button>
           <button class="human-sign-accept close-sign-button" type="button">收下此签</button>
         </div>
       </section>

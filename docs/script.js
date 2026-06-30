@@ -1,11 +1,11 @@
 const ASSETS = {
   background: "assets/bg-base.webp",
   storyBackground: "assets/story-bg.webp",
-  storyPaper: "assets/story-paper-panel.png",
+  storyPaper: "assets/story-paper-panel.webp",
   storySideFrame: "assets/story-side-frame.webp",
   storyCornerFrame: "assets/story-corner-frame.webp",
-  storyTabsFrame: "assets/story-tabs-frame-transparent.png",
-  firstDish: "assets/dish-home-01.png",
+  storyTabsFrame: "assets/story-tabs-frame-transparent.webp",
+  firstDish: "assets/dish-home-01.webp",
   decorations: [
     { src: "assets/deco-left-top.webp", className: "deco-left-top", introClass: "intro-ornament-left-top" },
     { src: "assets/deco-right-top.webp", className: "deco-right-top", introClass: "intro-ornament-right-top" },
@@ -14,15 +14,18 @@ const ASSETS = {
   ],
 };
 
+const DISH_PRELOAD_RADIUS = 1;
+const imageLoadCache = new Map();
+
 const HOME_DISH_IMAGES = [
-  "assets/dish-home-01.png",
-  "assets/dish-home-02.png",
-  "assets/dish-home-03.png",
-  "assets/dish-home-04.png",
-  "assets/dish-home-05.png",
-  "assets/dish-home-06.png",
-  "assets/dish-home-07.png",
-  "assets/dish-home-08.png",
+  "assets/dish-home-01.webp",
+  "assets/dish-home-02.webp",
+  "assets/dish-home-03.webp",
+  "assets/dish-home-04.webp",
+  "assets/dish-home-05.webp",
+  "assets/dish-home-06.webp",
+  "assets/dish-home-07.webp",
+  "assets/dish-home-08.webp",
 ];
 
 const DISHES = [
@@ -561,6 +564,39 @@ const HUMAN_SIGNS = [
   },
 ];
 
+const HUMAN_SIGN_SUITABLES = [
+  "慢一点下判断",
+  "把话说甜",
+  "先吃饱再做决定",
+  "给自己留个台阶",
+  "主动开口",
+  "整理一处小角落",
+  "把旧事翻热",
+  "请人同坐一桌",
+];
+
+const HUMAN_SIGN_AVOIDS = [
+  "空腹硬撑",
+  "把火开太急",
+  "为小事拧巴",
+  "边吃边生气",
+  "把好意说成客套",
+  "急着证明自己",
+  "用沉默憋坏胃口",
+  "让手机吃掉一顿饭",
+];
+
+const HUMAN_SIGN_JOYS = [
+  "给晚饭加一味香",
+  "把喜欢的杯子拿出来用",
+  "给自己留十分钟慢慢吃",
+  "拍下今天最好看的一口",
+  "给在意的人发一句好话",
+  "买一份路过时想吃的小点",
+  "把桌面收成能坐下喝茶的样子",
+  "听一首能让筷子慢下来的歌",
+];
+
 
 
 const QR_VERSION_INFO = [
@@ -574,12 +610,18 @@ const QR_VERSION_INFO = [
 const QR_GF = createQrGaloisTables();
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DISH_FADE_OUT_MS = 220;
+const DISH_FADE_IN_DELAY_MS = 40;
 let currentDishIndex = 0;
 let activeStorySection = "intro";
 let toastTimer = 0;
 let introReady = false;
 let enteringSite = false;
 let posterRenderId = 0;
+let dishSwitchToken = 0;
+let currentHumanSign = null;
+let currentHumanSignFortune = null;
+let humanSignRevealTimer = 0;
 
 const els = {
   introScreen: document.querySelector(".intro-screen"),
@@ -623,6 +665,10 @@ const els = {
   humanSignCurrent: document.querySelector(".human-sign-current"),
   humanSignLine: document.querySelector(".human-sign-line"),
   humanSignMeaning: document.querySelector(".human-sign-meaning"),
+  humanSignSuitable: document.querySelector(".human-sign-suitable"),
+  humanSignAvoid: document.querySelector(".human-sign-avoid"),
+  humanSignJoy: document.querySelector(".human-sign-joy"),
+  humanSignCopy: document.querySelector(".human-sign-copy"),
   humanSignVerticalText: document.querySelector(".human-sign-vertical-text"),
   musicAudio: document.querySelector(".background-music"),
   musicToggleButton: document.querySelector(".music-toggle-button"),
@@ -654,21 +700,18 @@ async function runIntro() {
 }
 
 async function preloadAssets() {
-  const bgLoaded = await loadImage(ASSETS.background, 3500);
+  const decorationLoads = ASSETS.decorations.map(loadDecorationLayer);
+  const [bgLoaded] = await Promise.all([
+    loadImage(ASSETS.background, 3500),
+    loadFirstDish(),
+  ]);
 
   if (bgLoaded) {
     els.bgBase.style.backgroundImage = `url("${ASSETS.background}")`;
   }
 
   els.introBg.classList.add("is-visible");
-  await delay(reducedMotion ? 0 : 180);
-
-  for (const deco of ASSETS.decorations) {
-    await loadDecorationLayer(deco);
-    await delay(reducedMotion ? 0 : 170);
-  }
-
-  await loadFirstDish();
+  void Promise.all(decorationLoads);
 }
 
 async function setReadyToEnter() {
@@ -746,9 +789,17 @@ function loadDecorationLayer(deco) {
     if (!loaded) return false;
 
     const mainOrnament = document.querySelector(`.${deco.className}`);
+    const introOrnament = deco.introClass ? document.querySelector(`.${deco.introClass}`) : null;
 
     if (mainOrnament) {
       mainOrnament.src = deco.src;
+      if (els.introScreen?.classList.contains("is-hidden")) {
+        mainOrnament.classList.add("is-visible");
+      }
+    }
+
+    if (introOrnament) {
+      introOrnament.src = deco.src;
     }
 
     return true;
@@ -790,24 +841,34 @@ function glowPlate() {
 }
 
 async function loadFirstDish() {
+  const loadToken = dishSwitchToken;
   const dish = DISHES[0];
   const homeImage = getHomeDishImage(0);
-  const loaded = await loadImage(homeImage, 4000);
+
+  renderDishPage(dish);
+
+  const loaded = await loadImage(homeImage, 2200);
+
+  if (dishSwitchToken !== loadToken || currentDishIndex !== 0) {
+    return loaded;
+  }
 
   if (els.dishImage) {
     els.dishImage.src = loaded ? homeImage : dish.image;
   }
 
-  if (els.storyDishImage) {
-    els.storyDishImage.src = dish.image;
-  }
-
-  renderDishPage(dish);
+  queueIdleTask(() => {
+    if (els.storyDishImage && !els.storyDishImage.getAttribute("src")) {
+      els.storyDishImage.src = dish.image;
+    }
+  });
+  preloadNearbyDishes(0);
   return loaded;
 }
 
 async function enterMainStageUi() {
   const uiQueue = [
+    document.querySelector(".mobile-home-topbar"),
     document.querySelector(".dish-home-copy"),
     document.querySelector(".dish-home-visual"),
     document.querySelector(".side-actions-left"),
@@ -822,7 +883,14 @@ async function enterMainStageUi() {
 }
 
 function loadImage(src, timeout = 2500) {
-  return new Promise((resolve) => {
+  if (!src) return Promise.resolve(false);
+
+  const cacheKey = new URL(src, window.location.href).href;
+  const cached = imageLoadCache.get(cacheKey);
+
+  if (cached) return cached;
+
+  const promise = new Promise((resolve) => {
     const img = new Image();
     let settled = false;
     const timer = window.setTimeout(() => finish(false), timeout);
@@ -836,12 +904,22 @@ function loadImage(src, timeout = 2500) {
 
     img.onload = () => finish(true);
     img.onerror = () => finish(false);
+    img.decoding = "async";
     img.src = src;
 
     if (img.complete && img.naturalWidth > 0) {
       finish(true);
     }
+  }).then((loaded) => {
+    if (!loaded) {
+      imageLoadCache.delete(cacheKey);
+    }
+
+    return loaded;
   });
+
+  imageLoadCache.set(cacheKey, promise);
+  return promise;
 }
 
 function bindInteractions() {
@@ -869,6 +947,9 @@ function bindInteractions() {
   document.querySelectorAll(".human-sign-draw").forEach((button) => {
     button.addEventListener("click", drawHumanSign);
   });
+  document.querySelectorAll(".human-sign-copy").forEach((button) => {
+    button.addEventListener("click", copyHumanSign);
+  });
   els.musicToggleButton?.addEventListener("click", toggleBackgroundMusic);
   els.musicAudio?.addEventListener("play", () => updateMusicButtonState(true));
   els.musicAudio?.addEventListener("pause", () => updateMusicButtonState(false));
@@ -885,8 +966,11 @@ function bindInteractions() {
 
       if (!Number.isFinite(index)) return;
 
-      await selectDish(index);
-      showDishHome();
+      const switched = await selectDish(index);
+
+      if (switched !== false) {
+        showDishHome();
+      }
     });
   });
 
@@ -1011,30 +1095,108 @@ function getHomeDishImage(index) {
   return HOME_DISH_IMAGES[index] || DISHES[index]?.image || ASSETS.firstDish;
 }
 
+function normalizeDishIndex(index) {
+  if (!DISHES.length) return 0;
+
+  return ((index % DISHES.length) + DISHES.length) % DISHES.length;
+}
+
+function queueIdleTask(callback, timeout = 1400) {
+  if ("requestIdleCallback" in window) {
+    return window.requestIdleCallback(callback, { timeout });
+  }
+
+  return window.setTimeout(callback, 80);
+}
+
+function preloadNearbyDishes(index) {
+  if (!DISHES.length) return;
+
+  const targetIndexes = new Set();
+
+  for (let offset = -DISH_PRELOAD_RADIUS; offset <= DISH_PRELOAD_RADIUS; offset += 1) {
+    targetIndexes.add(normalizeDishIndex(index + offset));
+  }
+
+  queueIdleTask(() => {
+    targetIndexes.forEach((dishIndex) => {
+      const dish = DISHES[dishIndex];
+
+      if (!dish) return;
+
+      void loadImage(getHomeDishImage(dishIndex), 3600);
+      void loadImage(dish.image, 3600);
+    });
+  });
+}
+
 async function selectDish(index) {
-  currentDishIndex = (index + DISHES.length) % DISHES.length;
+  const nextDishIndex = normalizeDishIndex(index);
+  const switchToken = ++dishSwitchToken;
+
+  currentDishIndex = nextDishIndex;
   const dish = DISHES[currentDishIndex];
   const homeImage = getHomeDishImage(currentDishIndex);
+  const homeImageUrl = new URL(homeImage, window.location.href).href;
+  const storyImageUrl = new URL(dish.image, window.location.href).href;
 
   if (els.dishImage) {
     els.dishImage.classList.add("is-switching");
   }
 
+  if (els.storyDishImage) {
+    els.storyDishImage.classList.add("is-switching");
+  }
+
+  await delay(reducedMotion ? 0 : DISH_FADE_OUT_MS);
+
+  if (switchToken !== dishSwitchToken) return false;
+
   renderDishPage(dish);
 
-  if (els.dishImage && els.dishImage.src !== new URL(homeImage, window.location.href).href) {
+  if (els.dishImage && els.dishImage.src !== homeImageUrl) {
     const loaded = await loadImage(homeImage, 2400);
+
+    if (switchToken !== dishSwitchToken) return false;
+
     els.dishImage.src = loaded ? homeImage : dish.image;
+    await decodeElementImage(els.dishImage);
   }
 
-  if (els.storyDishImage && els.storyDishImage.src !== new URL(dish.image, window.location.href).href) {
+  if (switchToken !== dishSwitchToken) return false;
+
+  if (els.storyDishImage && els.storyDishImage.src !== storyImageUrl) {
     els.storyDishImage.src = dish.image;
+    if (els.storyPage?.classList.contains("is-active")) {
+      await decodeElementImage(els.storyDishImage);
+    } else {
+      void decodeElementImage(els.storyDishImage);
+    }
   }
 
-  await delay(reducedMotion ? 0 : 80);
+  await delay(reducedMotion ? 0 : DISH_FADE_IN_DELAY_MS);
+
+  if (switchToken !== dishSwitchToken) return false;
 
   if (els.dishImage) {
     els.dishImage.classList.remove("is-switching");
+  }
+
+  if (els.storyDishImage) {
+    els.storyDishImage.classList.remove("is-switching");
+  }
+
+  preloadNearbyDishes(currentDishIndex);
+  return true;
+}
+
+async function decodeElementImage(image) {
+  if (!image?.decode) return;
+
+  try {
+    await image.decode();
+  } catch (error) {
+    // The preload path already decides the fallback; decode can reject if a request is interrupted.
   }
 }
 
@@ -1104,12 +1266,14 @@ function getSourceParts(source) {
 }
 
 async function changeDish(direction) {
-  const nextIndex = currentDishIndex + direction;
-  const dish = DISHES[(nextIndex + DISHES.length) % DISHES.length];
-  await delay(reducedMotion ? 0 : 150);
+  const nextIndex = normalizeDishIndex(currentDishIndex + direction);
+  const dish = DISHES[nextIndex];
 
-  await selectDish(nextIndex);
-  showToast(`${dish.title}已上桌`);
+  const switched = await selectDish(nextIndex);
+
+  if (switched !== false) {
+    showToast(`${dish.title}已上桌`);
+  }
 }
 
 function showRecipePage() {
@@ -1128,6 +1292,12 @@ function showRecipePage() {
 }
 
 function showStoryPage() {
+  const dish = DISHES[currentDishIndex];
+
+  if (els.storyDishImage && dish?.image && els.storyDishImage.src !== new URL(dish.image, window.location.href).href) {
+    els.storyDishImage.src = dish.image;
+  }
+
   els.bgBase.style.backgroundImage = `url("${ASSETS.storyBackground}")`;
   els.mainStage.classList.remove("is-recipe-view");
   els.mainStage.classList.add("is-story-view");
@@ -1172,16 +1342,67 @@ function closeHumanSignModal() {
 }
 
 function populateHumanSignContent() {
-  const dish = DISHES[currentDishIndex];
-  const sign = HUMAN_SIGNS[Math.floor(Math.random() * HUMAN_SIGNS.length)];
+  const sign = pickHumanSign();
+  const fortune = getHumanSignFortune(sign);
+  const signDish = getHumanSignDishName(sign);
+
+  currentHumanSign = sign;
+  currentHumanSignFortune = fortune;
 
   els.humanSignNumber.textContent = `第 ${String(sign.number).padStart(2, "0")} 签`;
   els.humanSignTitle.textContent = sign.title;
-  els.humanSignCurrent.textContent = `今日应味：${dish.title}`;
+  els.humanSignCurrent.textContent = `今日应味：${signDish}`;
   els.humanSignLine.textContent = sign.line;
   els.humanSignMeaning.textContent = sign.meaning;
+  els.humanSignSuitable.textContent = `宜：${fortune.suitable}`;
+  els.humanSignAvoid.textContent = `忌：${fortune.avoid}`;
+  els.humanSignJoy.textContent = `开心小事：${fortune.joy}`;
 
   requestAnimationFrame(fitHumanSignText);
+}
+
+function pickHumanSign() {
+  if (HUMAN_SIGNS.length < 2 || !currentHumanSign) {
+    return HUMAN_SIGNS[Math.floor(Math.random() * HUMAN_SIGNS.length)];
+  }
+
+  let nextSign = currentHumanSign;
+  while (nextSign.number === currentHumanSign.number) {
+    nextSign = HUMAN_SIGNS[Math.floor(Math.random() * HUMAN_SIGNS.length)];
+  }
+
+  return nextSign;
+}
+
+function getHumanSignDishName(sign) {
+  const titleParts = sign.title.split(" · ");
+  return titleParts[1]?.trim() || sign.title;
+}
+
+function getHumanSignFortune(sign) {
+  const index = Math.max(sign.number - 1, 0);
+
+  return {
+    suitable: HUMAN_SIGN_SUITABLES[index % HUMAN_SIGN_SUITABLES.length],
+    avoid: HUMAN_SIGN_AVOIDS[(index + 2) % HUMAN_SIGN_AVOIDS.length],
+    joy: HUMAN_SIGN_JOYS[(index + 5) % HUMAN_SIGN_JOYS.length],
+  };
+}
+
+function buildHumanSignShareText() {
+  if (!currentHumanSign || !currentHumanSignFortune) return "";
+
+  const signDish = getHumanSignDishName(currentHumanSign);
+  return [
+    `我在《金瓶梅》饮食图鉴抽到：第 ${String(currentHumanSign.number).padStart(2, "0")} 签`,
+    currentHumanSign.title,
+    currentHumanSign.line,
+    `今日应味：${signDish}`,
+    `宜：${currentHumanSignFortune.suitable}`,
+    `忌：${currentHumanSignFortune.avoid}`,
+    `开心小事：${currentHumanSignFortune.joy}`,
+    currentHumanSign.meaning,
+  ].join("\n");
 }
 
 function fitHumanSignText() {
@@ -1210,6 +1431,7 @@ function fitHumanSignText() {
 }
 
 function resetHumanSignAnimation() {
+  window.clearTimeout(humanSignRevealTimer);
   if (els.humanSignStick) {
     els.humanSignStick.classList.remove("is-revealed", "is-drawing");
   }
@@ -1218,6 +1440,10 @@ function resetHumanSignAnimation() {
   }
   if (els.humanSignDraw) {
     els.humanSignDraw.textContent = "抽一签";
+    els.humanSignDraw.disabled = false;
+  }
+  if (els.humanSignCopy) {
+    els.humanSignCopy.disabled = true;
   }
 }
 
@@ -1226,31 +1452,75 @@ function drawHumanSign() {
 
   if (els.humanSignDraw) {
     els.humanSignDraw.textContent = "再抽一签";
+    els.humanSignDraw.disabled = true;
+  }
+  if (els.humanSignCopy) {
+    els.humanSignCopy.disabled = true;
   }
 
   const stick = els.humanSignStick;
   if (!stick) return;
 
+  window.clearTimeout(humanSignRevealTimer);
   const wasRevealed = stick.classList.contains("is-revealed");
   stick.classList.remove("is-revealed", "is-drawing");
 
   const startDraw = () => {
     requestAnimationFrame(() => {
       stick.classList.add("is-drawing");
-      setTimeout(() => {
+      humanSignRevealTimer = window.setTimeout(() => {
         stick.classList.add("is-revealed");
         stick.classList.remove("is-drawing");
         if (els.humanSignReading) {
           els.humanSignReading.classList.add("is-visible");
+        }
+        if (els.humanSignDraw) {
+          els.humanSignDraw.disabled = false;
+        }
+        if (els.humanSignCopy) {
+          els.humanSignCopy.disabled = false;
         }
       }, 700);
     });
   };
 
   if (wasRevealed) {
-    setTimeout(startDraw, 320);
+    humanSignRevealTimer = window.setTimeout(startDraw, 320);
   } else {
     startDraw();
+  }
+}
+
+async function copyHumanSign() {
+  const text = buildHumanSignShareText();
+  if (!text) return;
+
+  try {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      copyTextWithFallback(text);
+    }
+    showToast("签文已复制，带着这口气走");
+  } catch (error) {
+    console.error(error);
+    showToast("复制失败，可以手动选中签文");
+  }
+}
+
+function copyTextWithFallback(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.left = "-9999px";
+  textArea.style.top = "0";
+  document.body.appendChild(textArea);
+  textArea.select();
+  const copied = document.execCommand("copy");
+  textArea.remove();
+  if (!copied) {
+    throw new Error("Fallback copy command failed");
   }
 }
 
