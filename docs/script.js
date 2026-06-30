@@ -14,7 +14,7 @@ const ASSETS = {
   ],
 };
 
-const PRIORITY_DISH_COUNT = 3;
+const PRIORITY_DISH_COUNT = 1;
 const FORWARD_PRELOAD_COUNT = 1;
 const DECORATION_LOAD_GROUPS = [
   ["deco-left-top", "deco-right-bottom"],
@@ -708,18 +708,24 @@ async function runIntro() {
 
 async function preloadAssets() {
   const fastIntro = window.matchMedia("(max-width: 720px)").matches;
-  const bgLoaded = await loadImage(ASSETS.background, fastIntro ? 1600 : 2400);
-
-  if (bgLoaded) {
-    els.bgBase.style.backgroundImage = `url("${ASSETS.background}")`;
-  }
 
   els.introBg.classList.add("is-visible");
+
+  void loadImage(ASSETS.background, fastIntro ? 1800 : 2600).then((bgLoaded) => {
+    if (bgLoaded) {
+      els.bgBase.style.backgroundImage = `url("${ASSETS.background}")`;
+    }
+  });
+
   void loadFirstDish();
+
   queueIdleTask(() => {
     void preloadPriorityDishes();
-  }, 1800);
-  void loadDecorationGroups();
+  }, fastIntro ? 2600 : 1800);
+
+  queueIdleTask(() => {
+    void loadDecorationGroups();
+  }, fastIntro ? 3000 : 1400);
 }
 
 async function setReadyToEnter() {
