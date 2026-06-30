@@ -14,7 +14,7 @@ const ASSETS = {
   ],
 };
 
-const PRIORITY_DISH_COUNT = 1;
+const PRIORITY_DISH_COUNT = 0;
 const FORWARD_PRELOAD_COUNT = 1;
 const DECORATION_LOAD_GROUPS = [
   ["deco-left-top", "deco-right-bottom"],
@@ -629,6 +629,7 @@ let currentHumanSign = null;
 let currentHumanSignFortune = null;
 let humanSignRevealTimer = 0;
 let sfxContext = null;
+let musicAutoplayAttempted = false;
 
 const els = {
   introScreen: document.querySelector(".intro-screen"),
@@ -711,6 +712,12 @@ async function preloadAssets() {
 
   els.introBg.classList.add("is-visible");
 
+  window.setTimeout(() => {
+    startDeferredStageLoads(fastIntro);
+  }, fastIntro ? 900 : 420);
+}
+
+function startDeferredStageLoads(fastIntro = false) {
   void loadImage(ASSETS.background, fastIntro ? 1800 : 2600).then((bgLoaded) => {
     if (bgLoaded) {
       els.bgBase.style.backgroundImage = `url("${ASSETS.background}")`;
@@ -719,11 +726,11 @@ async function preloadAssets() {
 
   void loadFirstDish();
 
-  queueIdleTask(() => {
+  window.setTimeout(() => {
     void preloadPriorityDishes();
   }, fastIntro ? 2600 : 1800);
 
-  queueIdleTask(() => {
+  window.setTimeout(() => {
     void loadDecorationGroups();
   }, fastIntro ? 3000 : 1400);
 }
@@ -748,6 +755,7 @@ async function enterSite() {
 
   await delay(reducedMotion ? 120 : 1080);
   await showMainStage();
+  scheduleBackgroundMusicAutoplay();
 }
 
 function createBurstParticles() {
@@ -1112,6 +1120,94 @@ async function startBackgroundMusic({ showFeedback = false } = {}) {
     }
     return false;
   }
+}
+
+function scheduleBackgroundMusicAutoplay() {
+  if (!els.musicAudio || musicAutoplayAttempted) return;
+
+  musicAutoplayAttempted = true;
+
+  queueIdleTask(async () => {
+    const stageStable = await waitForPrimaryStageStable();
+
+    if (!stageStable || !els.musicAudio || !els.musicAudio.paused) return;
+
+    els.musicAudio.preload = "auto";
+    els.musicAudio.load();
+
+    const ready = await waitForAudioReady(els.musicAudio, 6500);
+
+    if (!ready || !els.musicAudio.paused) return;
+
+    await startBackgroundMusic({ showFeedback: false });
+  }, 2400);
+}
+
+function waitForPrimaryStageStable(timeout = 3600) {
+  const started = performance.now();
+
+  return new Promise((resolve) => {
+    const check = () => {
+      const dishReady = !els.dishImage || (els.dishImage.complete && els.dishImage.naturalWidth > 0);
+      const dishSrc = els.dishImage?.currentSrc || els.dishImage?.src || "";
+      const homeDishReady = !els.dishImage || (dishReady && dishSrc.includes("dish-home"));
+      const pageReady = els.introScreen?.classList.contains("is-hidden");
+
+      if (pageReady && homeDishReady) {
+        resolve(true);
+        return;
+      }
+
+      if (performance.now() - started >= timeout) {
+        resolve(false);
+        return;
+      }
+
+      window.setTimeout(check, 160);
+    };
+
+    check();
+  });
+}
+
+function waitForAudioReady(audio, timeout = 6500) {
+  if (!audio) return Promise.resolve(false);
+  if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = window.setTimeout(() => finish(false), timeout);
+
+    function cleanup() {
+      audio.removeEventListener("canplay", onReady);
+      audio.removeEventListener("canplaythrough", onReady);
+      audio.removeEventListener("loadeddata", onReady);
+      audio.removeEventListener("error", onError);
+      audio.removeEventListener("stalled", onError);
+    }
+
+    function finish(result) {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      cleanup();
+      resolve(result);
+    }
+
+    function onReady() {
+      finish(true);
+    }
+
+    function onError() {
+      finish(false);
+    }
+
+    audio.addEventListener("canplay", onReady);
+    audio.addEventListener("canplaythrough", onReady);
+    audio.addEventListener("loadeddata", onReady);
+    audio.addEventListener("error", onError);
+    audio.addEventListener("stalled", onError);
+  });
 }
 
 function updateMusicButtonState(isPlaying) {
@@ -1535,10 +1631,20 @@ function showDishHome({ instant = false } = {}) {
 
 function openHumanSignModal() {
   playSoundEffect("tap");
+  loadDeferredImages(els.humanSignModal);
   populateHumanSignContent();
   resetHumanSignAnimation();
   els.humanSignModal.classList.add("is-open");
   els.humanSignModal.setAttribute("aria-hidden", "false");
+}
+
+function loadDeferredImages(root = document) {
+  if (!root) return;
+
+  root.querySelectorAll("img[data-src]").forEach((image) => {
+    image.src = image.dataset.src;
+    image.removeAttribute("data-src");
+  });
 }
 
 function closeHumanSignModal() {
