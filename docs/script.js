@@ -20,6 +20,7 @@ const DECORATION_LOAD_GROUPS = [
   ["deco-left-top", "deco-right-bottom"],
   ["deco-right-top", "deco-left-bottom"],
 ];
+const PRIMARY_DECORATION_GROUP = ["deco-left-top", "deco-right-bottom"];
 const imageLoadCache = new Map();
 
 const HOME_DISH_IMAGES = [
@@ -727,6 +728,10 @@ function startDeferredStageLoads(fastIntro = false) {
   void loadFirstDish();
 
   window.setTimeout(() => {
+    void loadDecorationGroup(PRIMARY_DECORATION_GROUP);
+  }, fastIntro ? 1200 : 760);
+
+  window.setTimeout(() => {
     void preloadPriorityDishes();
   }, fastIntro ? 2600 : 1800);
 
@@ -828,12 +833,16 @@ function loadDecorationLayer(deco) {
 
 async function loadDecorationGroups() {
   for (const group of DECORATION_LOAD_GROUPS) {
-    const decorations = getDecorationGroup(group);
-
-    await Promise.all(decorations.map(loadDecorationLayer));
-    revealDecorationGroup(decorations);
+    await loadDecorationGroup(group);
     await delay(reducedMotion ? 0 : 180);
   }
+}
+
+async function loadDecorationGroup(group) {
+  const decorations = getDecorationGroup(group);
+
+  await Promise.all(decorations.map(loadDecorationLayer));
+  revealDecorationGroup(decorations);
 }
 
 function revealBaseBackground() {
